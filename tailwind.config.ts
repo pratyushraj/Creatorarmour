@@ -76,9 +76,14 @@ export default {
         },
       },
       borderRadius: {
-        lg: "0.75rem", // Increased to 12px
+        xl: "1rem", // 16px for cards
+        lg: "0.75rem", // 12px for buttons
         md: "calc(0.75rem - 2px)",
         sm: "calc(0.75rem - 4px)",
+      },
+      boxShadow: {
+        sm: "var(--shadow-premium)",
+        md: "var(--shadow-premium)",
       },
       keyframes: {
         "accordion-down": {

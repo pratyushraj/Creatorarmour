@@ -1,10 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreatorKpi } from '@/types'; // Import CreatorKpi from types
-import { cn } from '@/lib/utils';
-import { ArrowUp, ArrowDown, Minus } from 'lucide-react'; // Import trend icons
+import { Card } from '@/components/ui/card';
+import { CreatorKpi } from '@/types';
 
 interface CreatorKpiCardsProps {
   kpiCards: CreatorKpi[];
@@ -12,34 +10,19 @@ interface CreatorKpiCardsProps {
 
 const CreatorKpiCards: React.FC<CreatorKpiCardsProps> = ({ kpiCards }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
       {kpiCards.map((kpi, index) => {
         const Icon = kpi.icon;
-        const ChangeIcon = kpi.changeDirection === 'up' ? ArrowUp : kpi.changeDirection === 'down' ? ArrowDown : Minus;
-        const changeColor = kpi.changeDirection === 'up' ? 'text-green-500' : kpi.changeDirection === 'down' ? 'text-red-500' : 'text-muted-foreground';
 
         return (
-          <Card key={index} className="creator-card-base shadow-lg p-4"> {/* Applied new base card class */}
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0"> {/* Minimal padding */}
-              <CardTitle className="text-sm font-medium text-muted-foreground">{kpi.title}</CardTitle>
-              <div className="relative">
-                <Icon className={cn("h-4 w-4", kpi.color)} />
-                {/* Optional glow effect for icons */}
-                <span className={cn("absolute inset-0 rounded-full opacity-30 blur-sm", kpi.color.replace('text-', 'bg-'))}></span>
+          <Card key={index} className="rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow flex flex-col justify-between h-[120px]">
+            <div className="flex flex-col space-y-3">
+              <Icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              <div>
+                <div className="text-3xl font-semibold tracking-tight text-foreground">{kpi.value}</div>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">{kpi.title}</div>
               </div>
-            </CardHeader>
-            <CardContent className="px-0 pb-0"> {/* Minimal padding */}
-              <div className="text-2xl font-bold text-foreground">{kpi.value}</div>
-              <div className="flex items-center text-sm mt-1">
-                {kpi.changePercentage !== undefined && (
-                  <span className={cn("flex items-center mr-2", changeColor)}>
-                    <ChangeIcon className="h-4 w-4 mr-1" />
-                    {kpi.changePercentage}%
-                  </span>
-                )}
-                <p className="text-xs text-muted-foreground">{kpi.statusDescription || kpi.description}</p>
-              </div>
-            </CardContent>
+            </div>
           </Card>
         );
       })}

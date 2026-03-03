@@ -4,85 +4,85 @@
 
 @layer base {
   :root {
-    /* New Dark Mode Colors (Default) */
-    --background: 220 10% 7%; /* #0B1325 */
-    --foreground: 0 0% 98%; /* White text */
+    /* New Dark Mode Colors (Default) - Deep Slate system */
+    --background: 222 47% 11%;
+    /* Deep Slate #0F172A */
+    --foreground: 210 40% 98%;
+    /* Soft Background #F8FAFC */
 
-    --card: 220 10% 10%; /* #131F3B (base for gradient) */
-    --card-foreground: 0 0% 98%;
+    --card: 222 47% 14%;
+    /* Slightly lighter than background */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 220 10% 15%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 47% 14%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 217.2 91.2% 59.8%; /* #3B82F6 */
+    --primary: 217 91% 60%;
+    /* Creator Blue */
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 220 10% 20%; /* Darker grey secondary */
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 215 25% 27%;
+    /* Mid Slate #334155 */
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 10% 20%;
-    --muted-foreground: 215 14% 70%; /* Muted light grey text */
+    --muted: 215 25% 27%;
+    /* Mid Slate */
+    --muted-foreground: 214 32% 91%;
+    /* Light Slate */
 
-    --accent: 220 10% 20%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%; /* #EF4444 */
+    --destructive: 0 70% 50%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 220 10% 25%; /* Darker border */
-    --input: 220 10% 20%;
-    --ring: 217.2 91.2% 59.8%;
+    --border: 215 25% 27%;
+    /* Mid Slate */
+    --input: 215 25% 27%;
+    --ring: 217 91% 60%;
 
-    --radius: 0.75rem; /* Increased to 12px */
-
-    --sidebar-background: 220 10% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 10% 20%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 10% 25%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 1rem;
+    --shadow-premium: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   /* Optional: Light mode class if needed for specific elements */
   .light {
-    --background: 0 0% 100%; /* White background */
-    --foreground: 222.2 84% 4.9%; /* Dark text */
+    --background: 210 40% 98%;
+    /* Soft Background #F8FAFC */
+    --foreground: 222 47% 11%;
+    /* Deep Slate #0F172A */
 
-    --card: 0 0% 100%; /* White card background */
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    /* Pure white */
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 222.2 47.4% 11.2%; /* Dark blue for primary actions */
-    --primary-foreground: 210 40% 98%; /* White text on primary */
+    --primary: 217 91% 60%;
+    /* Creator Blue */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%; /* Light grey secondary */
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 214 32% 91%;
+    /* Light Slate #E2E8F0 */
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%; /* Muted grey text */
+    --muted: 214 32% 91%;
+    /* Light Slate */
+    --muted-foreground: 215 25% 27%;
+    /* Mid Slate */
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%; /* Light grey border */
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --sidebar-background: 220 10% 10%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 217.2 91.2% 59.8%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 220 10% 20%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 220 10% 25%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 214 32% 91%;
+    /* Light Slate */
+    --input: 214 32% 91%;
+    --ring: 217 91% 60%;
+    --shadow-premium: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 }
 
@@ -93,66 +93,67 @@
 
   body {
     @apply bg-background text-foreground;
-    line-height: 1.45; /* Increased line height globally */
+    font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
   }
 }
 
 /* Custom utility to hide scrollbar */
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 .no-scrollbar::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
+  /* Chrome, Safari, Opera */
 }
 
-/* Base gradient for all Creator Dashboard cards */
+/* Base Style Replacement to avoid playful gradients */
 .creator-card-base {
-  background: linear-gradient(180deg, #131F3B 0%, #0E1629 100%); /* Card gradient */
-  border: 1px solid rgba(255,255,255,0.08); /* Subtle card border */
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
 }
 
-/* Custom gradient for Quick Action buttons */
 .quick-action-button-gradient {
-  background: linear-gradient(145deg, rgba(23,26,51,0.8), rgba(16,20,42,0.8));
-  border: 1px solid rgba(255,255,255,0.05);
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
   transition: all 0.2s ease-in-out;
 }
 
 .quick-action-button-gradient:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transform: scale(0.98);
+  background-color: hsl(var(--secondary));
 }
 
-/* Custom gradient for destructive Quick Action button */
 .quick-action-button-destructive-gradient {
-  background: linear-gradient(145deg, rgba(255,0,0,0.2), rgba(139,0,0,0.2));
-  border: 1px solid rgba(255,0,0,0.3);
-  color: hsl(var(--destructive-foreground)); /* Ensure text color is readable */
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--destructive) / 0.5);
+  color: hsl(var(--destructive-foreground));
   transition: all 0.2s ease-in-out;
 }
 
 .quick-action-button-destructive-gradient:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 10px rgba(255,0,0,0.2);
+  transform: scale(0.98);
+  background-color: hsl(var(--destructive) / 0.2);
 }
 
-/* Custom gradient for Drafting badge */
 .badge-drafting-gradient {
-  background: linear-gradient(145deg, rgba(59, 130, 246, 0.2), rgba(37, 99, 235, 0.2)); /* Blueish subtle gradient */
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #93C5FD; /* Light blue text */
+  background-color: rgba(107, 114, 128, 0.1);
+  border: 1px solid rgba(107, 114, 128, 0.3);
+  color: #9CA3AF;
 }
 
-/* Custom gradient for Payment Pending badge */
 .badge-payment-pending-gradient {
-  background: linear-gradient(145deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.2)); /* Yellowish subtle gradient */
-  border: 1px solid rgba(251, 191, 36, 0.3);
-  color: #FCD34D; /* Light yellow text */
+  background-color: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #FBBF24;
 }
 
-/* Custom gradient for brand pills */
 .brand-pill-gradient {
-  background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+  background-color: hsl(var(--secondary));
+  border: 1px solid hsl(var(--border));
 }

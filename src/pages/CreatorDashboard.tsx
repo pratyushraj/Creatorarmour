@@ -1,322 +1,205 @@
-"use client";
-
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSession } from '@/contexts/SessionContext';
-import { Loader2, PlusCircle, FileText, Bot, CheckCircle, AlertTriangle, MessageSquare, Lightbulb } from 'lucide-react'; // Added Lightbulb icon
-import { toast } from 'sonner';
-import { useCreatorDashboardData } from '@/lib/hooks/useCreatorDashboardData';
-import CreatorKpiCards from '@/components/creator-dashboard/CreatorKpiCards';
-import CreatorQuickActions from '@/components/creator-dashboard/CreatorQuickActions';
-import CreatorRevenuePayments from '@/components/creator-dashboard/CreatorRevenuePayments';
-import CreatorLegalWorkflows from '@/components/creator-dashboard/CreatorLegalWorkflows';
-import CreatorProtectionCompliance from '@/components/creator-dashboard/CreatorProtectionCompliance';
-import CreatorTaxCompliance from '@/components/creator-dashboard/CreatorTaxCompliance';
-import CreatorCopyrightScanner from '@/components/creator-dashboard/CreatorCopyrightScanner';
-import CreatorAIActionCenter from '@/components/creator-dashboard/CreatorAIActionCenter';
-import CreatorImportantDeadlines from '@/components/creator-dashboard/CreatorImportantDeadlines';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'; // Added DialogFooter
-import BrandDealForm from '@/components/forms/BrandDealForm';
+import { Loader2, Briefcase, Clock, IndianRupee, AlertTriangle, Check } from 'lucide-react';
 import { useBrandDeals } from '@/lib/hooks/useBrandDeals';
-import { useAIScanContractReview } from '@/lib/hooks/useAIScanContractReview'; // Import the correct hook
 import { BrandDeal } from '@/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button'; // Ensure Button is imported
-import { Label } from '@/components/ui/label'; // Import Label
-import { Input } from '@/components/ui/input'; // Import Input
-import { ScrollArea } from '@/components/ui/scroll-area'; // Import ScrollArea
-import SocialAccountLinkForm from '@/components/forms/SocialAccountLinkForm'; // NEW: Import SocialAccountLinkForm
-import { useSendPaymentReminder } from '@/lib/hooks/useSendPaymentReminder'; // NEW: Import useSendPaymentReminder
-import { useSendTakedownNotice } from '@/lib/hooks/useSendTakedownNotice'; // NEW: Import useSendTakedownNotice
-import { useCreatorDeadlines } from '@/lib/hooks/useTaxFilings'; // NEW: Import useCreatorDeadlines
+import BrandDealForm from '@/components/forms/BrandDealForm';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+const PIPELINE_STAGES = [
+  'Offer Sent',
+  'Under Review',
+  'Countered',
+  'Accepted',
+  'Confirmed',
+  'Completed',
+];
 
 const CreatorDashboard = () => {
   const { profile, loading: sessionLoading, isCreator } = useSession();
-  const creatorId = profile?.id;
   const [isBrandDealFormOpen, setIsBrandDealFormOpen] = useState(false);
   const [editingBrandDeal, setEditingBrandDeal] = useState<BrandDeal | null>(null);
-  const [isAIScanDialogOpen, setIsAIScanDialogOpen] = useState(false); // New state for AI scan dialog
-  const [selectedContractForAIScan, setSelectedContractForAIScan] = useState<string | null>(null); // Stores contract_file_url
-  const [aiScanResults, setAiScanResults] = useState<any>(null); // Stores AI scan results
-  const [isUploadContractQuickActionOpen, setIsUploadContractQuickActionOpen] = useState(false); // State for 'Upload Contract' quick action dialog
-  const [isSocialLinkFormOpen, setIsSocialLinkFormOpen] = useState(false); // NEW: State for SocialAccountLinkForm dialog
-  const [isSendPaymentReminderDialogOpen, setIsSendPaymentReminderDialogOpen] = useState(false); // NEW: State for Send Payment Reminder dialog
-  const [selectedDealForReminder, setSelectedDealForReminder] = useState<BrandDeal | null>(null); // NEW: State for selected deal for reminder
-  const [isSendTakedownNoticeDialogOpen, setIsSendTakedownNoticeDialogOpen] = useState(false); // NEW: State for Send Takedown Notice dialog
-  const [takedownNoticeDetails, setTakedownNoticeDetails] = useState({ // NEW: State for takedown notice details
-    contentUrl: '', platform: '', infringingUrl: '', infringingUser: ''
-  });
 
-  // Fetch mock dashboard data (for KPIs, AI actions, etc. that are not directly brand deals)
-  const { data: mockDashboardData, isLoading: isLoadingMocks, error: mockError } = useCreatorDashboardData(
-    !sessionLoading && isCreator
-  );
-
-  // Fetch real brand deals
-  const { data: brandDeals, isLoading: isLoadingBrandDeals, error: brandDealsError, refetch: refetchBrandDeals } = useBrandDeals({
+  const { data: brandDeals, isLoading: isLoadingBrandDeals, refetch: refetchBrandDeals } = useBrandDeals({
     creatorId: profile?.id,
     enabled: !sessionLoading && isCreator && !!profile?.id,
   });
-  
-  // NEW: Fetch real upcoming deadlines
-  const { data: upcomingDeadlines, isLoading: isLoadingDeadlines } = useCreatorDeadlines({
-    creatorId: creatorId,
-    enabled: !sessionLoading && isCreator && !!creatorId,
-  });
 
-  // AI Scan Contract Mutation
-  const scanContractMutation = useAIScanContractReview();
-  // NEW: Send Payment Reminder Mutation
-  const sendPaymentReminderMutation = useSendPaymentReminder();
-  // NEW: Send Takedown Notice Mutation
-  const sendTakedownNoticeMutation = useSendTakedownNotice();
-
-  useEffect(() => {
-    if (mockError) {
-      toast.error('Failed to load creator dashboard data', { description: mockError.message });
-    }
-    if (brandDealsError) {
-      toast.error('Failed to load brand deals', { description: brandDealsError.message });
-    }
-  }, [mockError, brandDealsError]);
-
-  // Derive data for Revenue & Payments from real brand deals
-  const derivedPendingBrandPayments = useMemo(() => {
-    const pending = brandDeals?.filter(deal => deal.status === 'Payment Pending' && new Date(deal.payment_expected_date) >= new Date()) || [];
-    const overdue = brandDeals?.filter(deal => deal.status === 'Payment Pending' && new Date(deal.payment_expected_date) < new Date()) || [];
-    
-    const totalPendingAmount = pending.reduce((sum, deal) => sum + deal.deal_amount, 0);
-    const totalOverdueAmount = overdue.reduce((sum, deal) => sum + deal.deal_amount, 0);
-
-    let status = 'No Pending Payments';
-    let details = '';
-    let amount = '₹0';
-
-    if (overdue.length > 0) {
-      status = 'Overdue';
-      details = `${overdue.length} invoice${overdue.length !== 1 ? 's' : ''}`;
-      amount = `₹${totalOverdueAmount.toLocaleString('en-IN')}`;
-    } else if (pending.length > 0) {
-      status = 'Payment Pending';
-      details = `${pending.length} invoice${pending.length !== 1 ? 's' : ''}`;
-      amount = `₹${totalPendingAmount.toLocaleString('en-IN')}`;
-    }
-
-    return { amount, status, details };
-  }, [brandDeals]);
-
-  const derivedActiveBrandDeals = useMemo(() => {
-    return brandDeals?.filter(deal => deal.status === 'Drafting' || deal.status === 'Approved' || deal.status === 'Payment Pending') || [];
-  }, [brandDeals]);
-
-  const derivedPreviousBrands = useMemo(() => {
-    const completedBrands = brandDeals?.filter(deal => deal.status === 'Completed').map(deal => deal.brand_name) || [];
-    return Array.from(new Set(completedBrands)); // Unique brand names
-  }, [brandDeals]);
-
-  const derivedTotalIncomeTracked = useMemo(() => {
-    const total = brandDeals?.filter(deal => deal.status === 'Completed' || deal.status === 'Approved' || deal.status === 'Payment Pending').reduce((sum, deal) => sum + deal.deal_amount, 0) || 0;
-    return `₹${total.toLocaleString('en-IN')}`;
-  }, [brandDeals]);
-
-  // Derive contracts requiring review from brand deals
-  const derivedContractsRequiringReview = useMemo(() => {
-    return brandDeals?.filter(deal => deal.status === 'Drafting' && deal.contract_file_url)
-      .map(deal => ({
-        id: deal.id,
-        title: `${deal.brand_name} - Contract Review Needed`,
-        status: 'risky' as const, // Placeholder status
-      })) || [];
-  }, [brandDeals]);
-
-  const handleAddBrandDeal = () => {
-    setEditingBrandDeal(null); // Clear any editing data
+  const handleAddDeal = () => {
+    setEditingBrandDeal(null);
     setIsBrandDealFormOpen(true);
   };
 
-  const handleEditBrandDeal = (deal: BrandDeal) => {
+  const handleEditDeal = (deal: BrandDeal) => {
     setEditingBrandDeal(deal);
     setIsBrandDealFormOpen(true);
   };
 
-  const handleAIScanContract = () => {
-    // Refetch brand deals to ensure we have the latest contracts
-    refetchBrandDeals();
-    setSelectedContractForAIScan(null); // Reset selection
-    setAiScanResults(null); // Clear previous results
-    setIsAIScanDialogOpen(true);
-  };
+  const metrics = useMemo(() => {
+    const deals = brandDeals || [];
+    const activeDeals = deals.filter(d => ['Drafting', 'Approved', 'Payment Pending'].includes(d.status)).length;
+    const pendingResponse = deals.filter(d => d.status === 'Drafting').length;
+    const actionRequired = deals.filter(d => d.status === 'Payment Pending' && new Date(d.payment_expected_date) < new Date()).length;
 
-  // Handler for 'Upload Contract' quick action
-  const handleUploadContractQuickAction = () => {
-    setIsUploadContractQuickActionOpen(true);
-  };
+    // Calculate this month's earnings
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthEarnings = deals
+      .filter(d => d.status === 'Completed' && new Date(d.payment_expected_date).getMonth() === currentMonth && new Date(d.payment_expected_date).getFullYear() === currentYear)
+      .reduce((sum, d) => sum + d.deal_amount, 0);
 
-  // NEW: Handler for 'Link Social Accounts' quick action
-  const handleLinkSocialAccounts = () => {
-    setIsSocialLinkFormOpen(true);
-  };
+    return [
+      { label: 'Active Deals', value: activeDeals, icon: Briefcase },
+      { label: 'Pending Response', value: pendingResponse, icon: Clock },
+      { label: 'This Month Earnings', value: `₹${monthEarnings.toLocaleString('en-IN')}`, icon: IndianRupee },
+      { label: 'Action Required', value: actionRequired, icon: AlertTriangle },
+    ];
+  }, [brandDeals]);
 
-  // NEW: Handler for 'Send Payment Reminder' quick action
-  const handleSendPaymentReminderQuickAction = () => {
-    setSelectedDealForReminder(null); // Reset selected deal
-    setIsSendPaymentReminderDialogOpen(true);
-  };
-
-  // NEW: Handler for 'Send Takedown Notice' quick action
-  const handleSendTakedownNoticeQuickAction = () => {
-    setTakedownNoticeDetails({ contentUrl: '', platform: '', infringingUrl: '', infringingUser: '' }); // Reset form
-    setIsSendTakedownNoticeDialogOpen(true);
-  };
-
-  const handlePerformAIScan = async () => {
-    if (!selectedContractForAIScan) {
-      toast.error('Please select a contract to scan.');
-      return;
-    }
-    const selectedDeal = brandDeals?.find(deal => deal.contract_file_url === selectedContractForAIScan);
-    if (!selectedDeal) {
-      toast.error('Selected contract not found.');
-      return;
-    }
-
-    try {
-      const results = await scanContractMutation.mutateAsync({
-        contract_file_url: selectedContractForAIScan,
-        brand_name: selectedDeal.brand_name,
-      });
-      setAiScanResults(results);
-      toast.success('AI scan completed successfully!');
-    } catch (error: any) {
-      toast.error('AI scan failed', { description: error.message });
-    }
-  };
-
-  // NEW: Handle sending payment reminder from dialog
-  const handleSendReminderFromDialog = async () => {
-    if (!selectedDealForReminder) return;
-
-    try {
-      await sendPaymentReminderMutation.mutateAsync({ brandDealId: selectedDealForReminder.id });
-      toast.success('Payment reminder sent!');
-      setIsSendPaymentReminderDialogOpen(false);
-      setSelectedDealForReminder(null);
-      refetchBrandDeals();
-    } catch (error: any) {
-      toast.error('Failed to send reminder', { description: error.message });
-    }
-  };
-
-  // NEW: Handle sending takedown notice from dialog
-  const handleSendTakedownFromDialog = async () => {
-    if (!takedownNoticeDetails.contentUrl.trim() || !takedownNoticeDetails.platform.trim() || !takedownNoticeDetails.infringingUrl.trim()) {
-      toast.error('Please fill in all required fields for the takedown notice.');
-      return;
-    }
-
-    try {
-      await sendTakedownNoticeMutation.mutateAsync({
-        contentUrl: takedownNoticeDetails.contentUrl.trim(),
-        platform: takedownNoticeDetails.platform.trim(),
-        infringingUrl: takedownNoticeDetails.infringingUrl.trim(),
-        infringingUser: takedownNoticeDetails.infringingUser.trim() || undefined,
-      });
-      toast.success('Takedown notice sent successfully!');
-      setIsSendTakedownNoticeDialogOpen(false);
-      setTakedownNoticeDetails({ contentUrl: '', platform: '', infringingUrl: '', infringingUser: '' });
-    } catch (error: any) {
-      toast.error('Failed to send takedown notice', { description: error.message });
-    }
-  };
-
-  if (sessionLoading || isLoadingMocks || isLoadingBrandDeals || isLoadingDeadlines) {
+  if (sessionLoading || isLoadingBrandDeals) {
     return (
-      <div className="min-h-[300px] flex flex-col items-center justify-center bg-background">
+      <div className="min-h-[400px] flex flex-col items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-3 text-muted-foreground">Loading Creator Dashboard...</p>
-      </div>
-    );
-  }
-
-  if (!mockDashboardData) {
-    return (
-      <div className="min-h-[300px] flex flex-col items-center justify-center bg-background">
-        <p className="text-destructive">No dashboard data available.</p>
+        <p className="mt-4 text-sm text-muted-foreground">Loading specific operations...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-8 bg-background"> {/* Ensure main container uses background color */}
-      <h1 className="text-3xl font-bold text-foreground">
-        CREATOR DASHBOARD, Welcome back, {profile?.first_name || 'Creator'}!
-      </h1>
-      <p className="text-muted-foreground opacity-60 -mt-6">Your comprehensive overview of brand deals, legal protection, and financial health.</p>
-
-      {/* KPI Cards */}
-      <CreatorKpiCards kpiCards={mockDashboardData.kpiCards} />
-
-      {/* Quick Actions */}
-      <CreatorQuickActions 
-        quickActions={mockDashboardData.quickActions} 
-        onAddBrandDeal={handleAddBrandDeal} 
-        onAIScanContract={handleAIScanContract} 
-        onUploadContract={handleUploadContractQuickAction} 
-        onLinkSocialAccounts={handleLinkSocialAccounts} // NEW: Pass the handler
-        onSendPaymentReminder={handleSendPaymentReminderQuickAction} // NEW: Pass the handler
-        onSendTakedownNotice={handleSendTakedownNoticeQuickAction} // NEW: Pass the handler
-      />
-
-      {/* Revenue & Payments */}
-      <CreatorRevenuePayments
-        pendingBrandPayments={derivedPendingBrandPayments}
-        activeBrandDeals={derivedActiveBrandDeals}
-        previousBrands={derivedPreviousBrands}
-        totalIncomeTracked={derivedTotalIncomeTracked}
-        onEditBrandDeal={handleEditBrandDeal}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Legal Workflows */}
-        <div className="lg:col-span-2">
-          <CreatorLegalWorkflows
-            contractsRequiringReview={derivedContractsRequiringReview}
-            takedownAlerts={mockDashboardData.takedownAlerts}
-          />
+    <div className="flex flex-col gap-10 bg-background max-w-7xl mx-auto px-4 md:px-8 py-8">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Collaboration Operations</h1>
+          <p className="text-sm text-muted-foreground mt-1">Manage pipeline, deals, and active contracts securely.</p>
         </div>
-
-        {/* AI Action Center */}
-        <CreatorAIActionCenter aiActions={mockDashboardData.aiActionCenter} onSendPaymentReminder={handleSendPaymentReminderQuickAction} />
+        <Button onClick={handleAddDeal} className="h-10 px-4 rounded-xl shadow-sm transition-transform hover:scale-[0.98]">
+          + New Deal Record
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Protection & Compliance */}
-        <CreatorProtectionCompliance protectionCompliance={mockDashboardData.protectionCompliance} />
-
-        {/* Tax Compliance Status */}
-        <CreatorTaxCompliance taxComplianceStatus={mockDashboardData.taxComplianceStatus} />
-
-        {/* Important Deadlines (Now using real data) */}
-        <CreatorImportantDeadlines deadlines={upcomingDeadlines || []} isLoading={isLoadingDeadlines} />
+      {/* Structured Metric Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {metrics.map((metric, i) => (
+          <Card key={i} className="rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
+            <div className="flex flex-col space-y-3">
+              <metric.icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              <div>
+                <div className="text-3xl font-semibold tracking-tight text-foreground">{metric.value}</div>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">{metric.label}</div>
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
 
-      {/* Copyright Scanner */}
-      <CreatorCopyrightScanner />
+      {/* Pipeline Tracker */}
+      <div className="w-full relative py-6 bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">Active Pipeline</h2>
+        <div className="flex items-start justify-between relative z-10 w-full gap-2">
+          <div className="absolute top-3 left-[5%] right-[5%] h-[1px] bg-border -z-10" />
+          {PIPELINE_STAGES.map((stage, i) => {
+            const isActive = i === 1; // Example active stage logic
+            return (
+              <div key={stage} className="flex flex-col items-center gap-3 flex-1 relative bg-card">
+                <div className={cn(
+                  "h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-medium border transition-colors bg-card",
+                  isActive ? "border-primary bg-primary/10 text-primary shadow-sm" : "border-border text-muted-foreground"
+                )}>
+                  {i < 1 ? <Check className="h-3 w-3" strokeWidth={2} /> : i + 1}
+                </div>
+                <span className={cn(
+                  "text-[10px] sm:text-[11px] uppercase tracking-wider font-medium text-center",
+                  isActive ? "text-foreground" : "text-muted-foreground/70"
+                )}>
+                  {stage}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Deal Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {brandDeals?.map((deal) => (
+          <div key={deal.id} className="bg-card p-5 rounded-2xl border border-border flex flex-col hover:shadow-md transition-all duration-200">
+            <div className="flex justify-between items-start mb-4 gap-3">
+              <div className="space-y-1 min-w-0 flex-1">
+                <h3 className="text-base font-semibold tracking-tight text-foreground truncate" title={deal.brand_name}>
+                  {deal.brand_name || "Untitled Deal"}
+                </h3>
+                <p className="text-sm text-muted-foreground truncate min-h-[20px]" title={deal.deliverables}>
+                  {deal.deliverables || "No deliverables specified"}
+                </p>
+              </div>
+              <Badge className={cn(
+                "rounded-[8px] px-2 py-0.5 text-[11px] font-medium border uppercase tracking-wider shrink-0 whitespace-nowrap",
+                deal.status === 'Completed' ? "bg-green-500/10 text-green-600 border-green-500/20" :
+                  deal.status === 'Payment Pending' ? "bg-amber-500/10 text-amber-600 border-amber-500/20" :
+                    deal.status === 'Drafting' ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
+                      "bg-secondary text-secondary-foreground border-border/50"
+              )} variant="outline">
+                {deal.status}
+              </Badge>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 text-sm mb-6 bg-secondary/30 p-3.5 rounded-[12px] border border-border/50">
+              <div>
+                <p className="text-[10px] tracking-wider text-muted-foreground uppercase mb-1 font-semibold">Budget</p>
+                <p className="font-medium text-foreground tracking-tight">₹{deal.deal_amount.toLocaleString('en-IN')}</p>
+              </div>
+              <div>
+                <p className="text-[10px] tracking-wider text-muted-foreground uppercase mb-1 font-semibold">Deadline</p>
+                <div className="flex items-center font-medium text-foreground tracking-tight">
+                  {new Date(deal.payment_expected_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-1">
+              <Button
+                onClick={() => handleEditDeal(deal)}
+                className={cn(
+                  "w-full h-10 font-semibold rounded-[10px] transition-transform duration-150 ease-out active:scale-[0.98] shadow-sm",
+                  deal.status === 'Payment Pending'
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-secondary/80 text-foreground hover:bg-secondary border border-border/50"
+                )}
+              >
+                {deal.status === 'Payment Pending' ? 'Resolve Payment' : 'View Details'}
+              </Button>
+            </div>
+          </div>
+        ))}
+
+        {!brandDeals?.length && (
+          <div className="col-span-full py-16 text-center border border-dashed border-border rounded-2xl bg-card/50">
+            <h3 className="text-lg font-medium text-foreground">No collaborations found</h3>
+            <p className="text-sm text-muted-foreground mt-2">Start your first structured deal or share your collaboration link.</p>
+          </div>
+        )}
+      </div>
 
       {/* Brand Deal Form Dialog */}
       <Dialog open={isBrandDealFormOpen} onOpenChange={setIsBrandDealFormOpen}>
-        <DialogContent 
-          className="sm:max-w-[600px] bg-card text-foreground border-border h-[90vh] flex flex-col"
+        <DialogContent
+          className="sm:max-w-[600px] bg-card text-foreground border-border h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl"
           aria-labelledby="brand-deal-form-title"
           aria-describedby="brand-deal-form-description"
         >
-          <DialogHeader>
-            <DialogTitle id="brand-deal-form-title">{editingBrandDeal ? 'Edit Brand Deal' : 'Add New Brand Deal'}</DialogTitle>
-            <DialogDescription id="brand-deal-form-description" className="text-muted-foreground">
-              {editingBrandDeal ? 'Update the details for this brand collaboration.' : 'Enter the details for your new brand collaboration.'}
+          <DialogHeader className="p-6 border-b border-border bg-card">
+            <DialogTitle id="brand-deal-form-title" className="text-xl">{editingBrandDeal ? 'Update Collaboration' : 'New Collaboration Record'}</DialogTitle>
+            <DialogDescription id="brand-deal-form-description" className="text-sm text-muted-foreground mt-1">
+              Securely store or create a new deal to be tracked in your pipeline.
             </DialogDescription>
           </DialogHeader>
-          <ScrollArea className="flex-1 p-4 -mx-4">
+          <ScrollArea className="flex-1 p-6">
             <BrandDealForm
               initialData={editingBrandDeal}
               onSaveSuccess={() => {
@@ -330,308 +213,6 @@ const CreatorDashboard = () => {
               }}
             />
           </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* Upload Contract Quick Action Dialog */}
-      <Dialog open={isUploadContractQuickActionOpen} onOpenChange={setIsUploadContractQuickActionOpen}>
-        <DialogContent 
-          className="sm:max-w-[600px] bg-card text-foreground border-border h-[90vh] flex flex-col"
-          aria-labelledby="upload-contract-quick-action-title"
-          aria-describedby="upload-contract-quick-action-description"
-        >
-          <DialogHeader>
-            <DialogTitle id="upload-contract-quick-action-title">Upload New Contract</DialogTitle>
-            <DialogDescription id="upload-contract-quick-action-description" className="text-muted-foreground">
-              To upload a contract, please create a new brand deal and attach the file.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="flex-1 p-4 -mx-4">
-            <BrandDealForm
-              initialData={null} // Always for a new deal
-              onSaveSuccess={() => {
-                refetchBrandDeals();
-                setIsUploadContractQuickActionOpen(false);
-              }}
-              onClose={() => {
-                setIsUploadContractQuickActionOpen(false);
-              }}
-            />
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* NEW: Social Account Link Dialog */}
-      <Dialog open={isSocialLinkFormOpen} onOpenChange={setIsSocialLinkFormOpen}>
-        <DialogContent 
-          className="sm:max-w-[600px] bg-card text-foreground border-border h-[90vh] flex flex-col" // Added h-[90vh] flex flex-col
-          aria-labelledby="social-link-form-title"
-          aria-describedby="social-link-form-description"
-        >
-          <DialogHeader>
-            <DialogTitle id="social-link-form-title">Link Social Accounts</DialogTitle>
-            <DialogDescription id="social-link-form-description" className="text-muted-foreground">
-              Connect your social media profiles to enable advanced insights and protection.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="flex-1 p-4 -mx-4"> {/* Added flex-1 and negative margin for padding */}
-            {profile && (
-              <SocialAccountLinkForm
-                initialData={profile}
-                onSaveSuccess={() => {
-                  // Profile refetch is handled by useUpdateProfile's onSuccess
-                  setIsSocialLinkFormOpen(false);
-                }}
-                onClose={() => setIsSocialLinkFormOpen(false)}
-              />
-            )}
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
-
-      {/* AI Scan Contract Dialog */}
-      <Dialog open={isAIScanDialogOpen} onOpenChange={setIsAIScanDialogOpen}>
-        <DialogContent 
-          className="sm:max-w-[600px] bg-card text-foreground border-border"
-          aria-labelledby="ai-scan-contract-title"
-          aria-describedby="ai-scan-contract-description"
-        >
-          <DialogHeader>
-            <DialogTitle id="ai-scan-contract-title">AI Contract Scan</DialogTitle>
-            <DialogDescription id="ai-scan-contract-description" className="text-muted-foreground">
-              Select a contract to analyze for potential risks and insights.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="selectContract">Select Contract to Scan</Label>
-              <Select
-                onValueChange={setSelectedContractForAIScan}
-                value={selectedContractForAIScan || ''}
-                disabled={scanContractMutation.isPending || !brandDeals || brandDeals.length === 0}
-              >
-                <SelectTrigger id="selectContract">
-                  <SelectValue placeholder="Choose a contract" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brandDeals?.length === 0 ? (
-                    <SelectItem value="no-contracts" disabled>No contracts available</SelectItem>
-                  ) : brandDeals?.filter(deal => deal.contract_file_url).length === 0 ? (
-                    <SelectItem value="no-contracts-with-url" disabled>No contracts with uploaded files</SelectItem>
-                  ) : (
-                    brandDeals?.filter(deal => deal.contract_file_url).map((deal) => (
-                      <SelectItem key={deal.id} value={deal.contract_file_url!}>
-                        {deal.brand_name} - {deal.deliverables}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              {!brandDeals?.some(deal => deal.contract_file_url) && (
-                <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                  <Lightbulb className="h-4 w-4 mr-2 text-yellow-500" /> Upload a contract to a brand deal first to enable AI scanning.
-                </p>
-              )}
-            </div>
-
-            <Button
-              onClick={handlePerformAIScan}
-              disabled={!selectedContractForAIScan || scanContractMutation.isPending}
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {scanContractMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Scanning...
-                </>
-              ) : (
-                <>
-                  <Bot className="mr-2 h-4 w-4" /> Perform AI Scan
-                </>
-              )}
-            </Button>
-
-            {aiScanResults && (
-              <Card className="bg-secondary p-4 rounded-lg border border-border mt-4">
-                <CardHeader className="p-0 mb-3">
-                  <CardTitle className="text-lg font-semibold text-foreground flex items-center">
-                    <CheckCircle className="h-5 w-5 text-green-500 mr-2" /> AI Scan Results
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 space-y-3">
-                  <p className="text-sm text-muted-foreground">{aiScanResults.summary}</p>
-                  <h4 className="font-medium text-foreground flex items-center"><AlertTriangle className="h-4 w-4 text-red-500 mr-2" /> Key Insights:</h4>
-                  <ul className="list-disc list-inside ml-4 space-y-1 text-sm text-muted-foreground">
-                    {aiScanResults.insights.map((insight: any, index: number) => (
-                      <li key={index}>{insight.description}</li>
-                    ))}
-                  </ul>
-                  <p className="text-sm text-muted-foreground mt-3">
-                    <MessageSquare className="h-4 w-4 inline mr-2 text-blue-500" />
-                    **Recommendation:** {aiScanResults.recommendations}
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAIScanDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* NEW: Send Payment Reminder Dialog */}
-      <Dialog open={isSendPaymentReminderDialogOpen} onOpenChange={setIsSendPaymentReminderDialogOpen}>
-        <DialogContent 
-          className="sm:max-w-[425px] bg-card text-foreground border-border"
-          aria-labelledby="send-reminder-title"
-          aria-describedby="send-reminder-description"
-        >
-          <DialogHeader>
-            <DialogTitle id="send-reminder-title">Send Payment Reminder</DialogTitle>
-            <DialogDescription id="send-reminder-description" className="text-muted-foreground">
-              Select a brand deal to send a payment reminder for.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="selectDealForReminder">Select Deal</Label>
-              <Select
-                onValueChange={(value) => setSelectedDealForReminder(brandDeals?.find(deal => deal.id === value) || null)}
-                value={selectedDealForReminder?.id || ''}
-                disabled={sendPaymentReminderMutation.isPending || !brandDeals || brandDeals.length === 0}
-              >
-                <SelectTrigger id="selectDealForReminder">
-                  <SelectValue placeholder="Choose a deal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brandDeals?.filter(deal => deal.status === 'Payment Pending').length === 0 ? (
-                    <SelectItem value="no-deals" disabled>No pending payment deals</SelectItem>
-                  ) : (
-                    brandDeals?.filter(deal => deal.status === 'Payment Pending').map((deal) => (
-                      <SelectItem key={deal.id} value={deal.id}>
-                        {deal.brand_name} - ₹{deal.deal_amount.toLocaleString('en-IN')} (Due: {new Date(deal.payment_expected_date).toLocaleDateString()})
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-              {!brandDeals?.some(deal => deal.status === 'Payment Pending') && (
-                <p className="text-sm text-muted-foreground mt-2 flex items-center">
-                  <Lightbulb className="h-4 w-4 mr-2 text-yellow-500" /> No deals with pending payments.
-                </p>
-              )}
-            </div>
-            {selectedDealForReminder && (
-              <p className="text-sm text-muted-foreground flex items-center">
-                <MessageSquare className="h-4 w-4 mr-2" /> Reminder will be sent to: {selectedDealForReminder.brand_email || 'NoticeBazaar Support'}
-              </p>
-            )}
-            <Button
-              onClick={handleSendReminderFromDialog}
-              disabled={!selectedDealForReminder || sendPaymentReminderMutation.isPending}
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              {sendPaymentReminderMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-                </>
-              ) : (
-                'Send Reminder'
-              )}
-            </Button>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSendPaymentReminderDialogOpen(false)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* NEW: Send Takedown Notice Dialog */}
-      <Dialog open={isSendTakedownNoticeDialogOpen} onOpenChange={setIsSendTakedownNoticeDialogOpen}>
-        <DialogContent 
-          className="sm:max-w-[600px] bg-card text-foreground border-border"
-          aria-labelledby="send-takedown-title"
-          aria-describedby="send-takedown-description"
-        >
-          <DialogHeader>
-            <DialogTitle id="send-takedown-title">Send Takedown Notice</DialogTitle>
-            <DialogDescription id="send-takedown-description" className="text-muted-foreground">
-              Fill in details to send a formal DMCA takedown notice.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div>
-              <Label htmlFor="takedownContentUrl">Your Original Content URL *</Label>
-              <Input
-                id="takedownContentUrl"
-                type="url"
-                value={takedownNoticeDetails.contentUrl}
-                onChange={(e) => setTakedownNoticeDetails(prev => ({ ...prev, contentUrl: e.target.value }))}
-                disabled={sendTakedownNoticeMutation.isPending}
-                placeholder="e.g., https://youtube.com/watch?v=your_original_video_id"
-              />
-            </div>
-            <div>
-              <Label htmlFor="takedownPlatform">Platform of Infringement *</Label>
-              <Select
-                onValueChange={(value) => setTakedownNoticeDetails(prev => ({ ...prev, platform: value }))}
-                value={takedownNoticeDetails.platform}
-                disabled={sendTakedownNoticeMutation.isPending}
-              >
-                <SelectTrigger id="takedownPlatform">
-                  <SelectValue placeholder="Select platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  {['YouTube', 'Instagram', 'TikTok', 'Facebook', 'Other Web'].map((platform) => (
-                    <SelectItem key={platform} value={platform}>{platform}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="takedownInfringingUrl">Infringing Content URL *</Label>
-              <Input
-                id="takedownInfringingUrl"
-                type="url"
-                value={takedownNoticeDetails.infringingUrl}
-                onChange={(e) => setTakedownNoticeDetails(prev => ({ ...prev, infringingUrl: e.target.value }))}
-                disabled={sendTakedownNoticeMutation.isPending}
-                placeholder="e.g., https://youtube.com/watch?v=infringing_video_id"
-              />
-            </div>
-            <div>
-              <Label htmlFor="takedownInfringingUser">Infringing User/Channel (Optional)</Label>
-              <Input
-                id="takedownInfringingUser"
-                value={takedownNoticeDetails.infringingUser}
-                onChange={(e) => setTakedownNoticeDetails(prev => ({ ...prev, infringingUser: e.target.value }))}
-                disabled={sendTakedownNoticeMutation.isPending}
-                placeholder="e.g., CopyCat Channel"
-              />
-            </div>
-            <p className="text-sm text-muted-foreground flex items-center">
-              <AlertTriangle className="h-4 w-4 mr-2 text-red-500" />
-              By sending this, you confirm you are the copyright owner or authorized agent.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSendTakedownNoticeDialogOpen(false)} disabled={sendTakedownNoticeMutation.isPending}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSendTakedownFromDialog}
-              disabled={!takedownNoticeDetails.contentUrl.trim() || !takedownNoticeDetails.platform.trim() || !takedownNoticeDetails.infringingUrl.trim() || sendTakedownNoticeMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {sendTakedownNoticeMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending...
-                </>
-              ) : (
-                'Send Takedown Notice'
-              )}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

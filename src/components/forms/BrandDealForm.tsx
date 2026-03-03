@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Upload, FileText, CalendarDays, DollarSign, User, Globe, Mail, ReceiptText } from 'lucide-react'; // Added Mail and ReceiptText icons
+import { Loader2, Upload, FileText, DollarSign, User, Mail, ReceiptText } from 'lucide-react'; // Added Mail and ReceiptText icons
 import { toast } from 'sonner';
 import { DialogFooter } from '@/components/ui/dialog';
 import { useSession } from '@/contexts/SessionContext';
@@ -142,19 +142,17 @@ const BrandDealForm = ({ initialData, onSaveSuccess, onClose }: BrandDealFormPro
           id: initialData.id,
           contract_file: contractFile,
           original_contract_file_url: existingContractFileUrl,
-          invoice_file: invoiceFile,
           original_invoice_file_url: existingInvoiceFileUrl,
           ...basePayload, // Pass all fields including organization_id
         });
-        toast.success('Brand deal updated successfully!');
+        toast.success('Brand deal updated.');
       } else {
         // Add new brand deal
         await addBrandDealMutation.mutateAsync({
           contract_file: contractFile,
-          invoice_file: invoiceFile,
           ...basePayload, // Pass all fields including organization_id
         });
-        toast.success('Brand deal added successfully!');
+        toast.success('Brand deal added.');
       }
       onSaveSuccess();
       onClose();
@@ -357,10 +355,10 @@ const BrandDealForm = ({ initialData, onSaveSuccess, onClose }: BrandDealFormPro
         <Button type="submit" disabled={isSubmitting || !brandName.trim() || !dealAmount.trim() || !deliverables.trim() || !dueDate.trim() || !paymentExpectedDate.trim()}>
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving
             </>
           ) : (
-            initialData ? 'Save Changes' : 'Add Brand Deal'
+            initialData ? 'Save Record' : 'Create Record'
           )}
         </Button>
       </DialogFooter>

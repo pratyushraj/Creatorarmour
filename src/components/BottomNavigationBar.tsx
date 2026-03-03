@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom'; // Import useLocation
+import { useNavigate, useLocation } from 'react-router-dom'; // Import useLocation
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Home, Briefcase, FileText, MessageSquare, PlusCircle, FileUp, CalendarDays, Bot, Zap, Paperclip } from 'lucide-react'; // Added Paperclip, kept FileUp for upload form
 import {
   Dialog,
   DialogContent,
@@ -12,10 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { Home, Briefcase, MessageSquare, PlusCircle, CalendarDays, Bot, Paperclip, DollarSign, User } from 'lucide-react'; // Added DollarSign, User
 import DocumentUploadForm from '@/components/forms/DocumentUploadForm';
 import ConsultationBookingForm from '@/components/forms/ConsultationBookingForm';
-import { toast } from 'sonner';
-import { useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
 import AIAssistant, { AIState, Message } from './AIAssistant'; // Import AI Assistant types
 
 interface BottomNavigationBarProps {
@@ -26,7 +24,6 @@ interface BottomNavigationBarProps {
 const BottomNavigationBar = ({ onDocumentUploadSuccess, onConsultationBookingSuccess }: BottomNavigationBarProps) => {
   const navigate = useNavigate();
   const location = useLocation(); // Initialize useLocation
-  const queryClient = useQueryClient(); // Initialize queryClient
 
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [activeQuickAction, setActiveQuickAction] = useState<'upload' | 'book' | 'message' | 'ai' | null>(null); // Added 'ai'
@@ -89,42 +86,66 @@ const BottomNavigationBar = ({ onDocumentUploadSuccess, onConsultationBookingSuc
   };
 
   const navItems = [
-    { to: "/client-dashboard", icon: Home, label: "Home" },
-    { to: "/client-cases", icon: Briefcase, label: "Cases" },
-    { to: "quick-actions", icon: Zap, label: "Actions" }, // Changed icon to Zap
-    { to: "/client-documents", icon: FileText, label: "Docs" },
-    { to: "/messages", icon: MessageSquare, label: "Messages" },
+    { to: "/creator-dashboard", icon: Home, label: "Dashboard" },
+    { to: "/creator-contracts", icon: Briefcase, label: "Collabs" },
+  ];
+
+  const rightNavItems = [
+    { to: "/creator-payments", icon: DollarSign, label: "Payments" },
+    { to: "/client-profile", icon: User, label: "Profile" },
   ];
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg md:hidden">
-        <nav className="flex justify-around h-16 items-center">
-          {navItems.map((item) => (
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-sm md:hidden pb-safe">
+        <nav className="flex justify-between h-[68px] items-center px-4 relative">
+          <div className="flex w-[40%] justify-between">
+            {navItems.map((item) => (
+              <Button
+                key={item.to}
+                variant="ghost"
+                className={cn(
+                  "flex flex-col items-center justify-center h-full w-full text-muted-foreground hover:bg-transparent hover:text-foreground",
+                  item.to === location.pathname && "text-primary hover:text-primary"
+                )}
+                onClick={() => navigate(item.to)}
+              >
+                <item.icon className="h-[22px] w-[22px] stroke-[1.5]" />
+                <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+              </Button>
+            ))}
+          </div>
+
+          <div className="absolute left-1/2 -translate-x-1/2 -top-5">
             <Button
-              key={item.to}
-              variant="ghost"
-              className={cn(
-                "flex flex-col items-center justify-center h-full w-full text-muted-foreground hover:bg-accent hover:text-foreground",
-                (item.to === location.pathname || (item.to === "quick-actions" && isQuickActionsOpen)) && "text-primary bg-accent hover:bg-accent"
-              )}
-              onClick={() => {
-                if (item.to === "quick-actions") {
-                  setIsQuickActionsOpen(true);
-                } else {
-                  navigate(item.to);
-                }
-              }}
+              className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex flex-col items-center justify-center shadow-md transition-all duration-200 hover:scale-[0.98]"
+              onClick={() => setIsQuickActionsOpen(true)}
             >
-              <item.icon className={cn("h-5 w-5", item.to === "quick-actions" && "h-6 w-6")} />
-              <span className="text-xs mt-1">{item.label}</span>
+              <PlusCircle className="h-6 w-6 stroke-[1.5]" />
             </Button>
-          ))}
+          </div>
+
+          <div className="flex w-[40%] justify-between">
+            {rightNavItems.map((item) => (
+              <Button
+                key={item.to}
+                variant="ghost"
+                className={cn(
+                  "flex flex-col items-center justify-center h-full w-full text-muted-foreground hover:bg-transparent hover:text-foreground",
+                  item.to === location.pathname && "text-primary hover:text-primary"
+                )}
+                onClick={() => navigate(item.to)}
+              >
+                <item.icon className="h-[22px] w-[22px] stroke-[1.5]" />
+                <span className="text-[10px] mt-1 font-medium">{item.label}</span>
+              </Button>
+            ))}
+          </div>
         </nav>
       </div>
 
       <Dialog open={isQuickActionsOpen} onOpenChange={setIsQuickActionsOpen}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[425px] bg-card text-foreground border-border"
           aria-labelledby="quick-actions-title"
           aria-describedby="quick-actions-description"
@@ -177,7 +198,7 @@ const BottomNavigationBar = ({ onDocumentUploadSuccess, onConsultationBookingSuc
 
       {/* Document Upload Dialog (now triggered by AI Assistant) */}
       <Dialog open={activeQuickAction === 'upload' && isQuickActionsOpen} onOpenChange={(open) => !open && handleCloseQuickActions()}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[425px] bg-card text-foreground border-border"
           aria-labelledby="mobile-upload-doc-title"
           aria-describedby="mobile-upload-doc-description"
@@ -206,7 +227,7 @@ const BottomNavigationBar = ({ onDocumentUploadSuccess, onConsultationBookingSuc
       {/* We keep this dialog definition but it's only opened if the AI flow triggers it, 
           which now immediately opens Calendly and closes the dialog. */}
       <Dialog open={activeQuickAction === 'book' && isQuickActionsOpen} onOpenChange={(open) => !open && handleCloseQuickActions()}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[425px] bg-card text-foreground border-border"
           aria-labelledby="mobile-book-consultation-title"
           aria-describedby="mobile-book-consultation-description"
@@ -223,7 +244,7 @@ const BottomNavigationBar = ({ onDocumentUploadSuccess, onConsultationBookingSuc
 
       {/* AI Assistant Dialog */}
       <Dialog open={isAIAssistantOpen} onOpenChange={handleCloseAIAssistant}>
-        <DialogContent 
+        <DialogContent
           className="sm:max-w-[425px] h-[80vh] flex flex-col bg-card text-foreground border-border"
           aria-labelledby="mobile-ai-assistant-title"
           aria-describedby="mobile-ai-assistant-description"
@@ -237,7 +258,7 @@ const BottomNavigationBar = ({ onDocumentUploadSuccess, onConsultationBookingSuc
             initialFlow={aiInitialFlow}
             onDocumentUploadTrigger={handleAiTriggerDocumentUpload}
             onConsultationBookingTrigger={handleAiTriggerConsultationBooking}
-            
+
             // Pass persistent state
             messages={aiMessages}
             setMessages={setAiMessages}

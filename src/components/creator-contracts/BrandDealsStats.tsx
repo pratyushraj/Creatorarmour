@@ -1,8 +1,6 @@
-"use client";
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { IndianRupee, Briefcase, Clock, DollarSign, Loader2 } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { IndianRupee, Briefcase, Clock, FileText, Loader2 } from 'lucide-react';
 import { BrandDeal } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -11,11 +9,11 @@ interface BrandDealsStatsProps {
   isLoading: boolean;
 }
 
-const BrandDealsStats: React.FC<BrandDealsStatsProps> = ({ allDeals, isLoading }) => {
+export default function BrandDealsStats({ allDeals, isLoading }: BrandDealsStatsProps) {
   const totalDeals = allDeals.length;
   const activeDeals = allDeals.filter(d => d.status === 'Drafting' || d.status === 'Approved').length;
   const pendingPayments = allDeals.filter(d => d.status === 'Payment Pending').length;
-  
+
   const incomeTracked = allDeals
     .filter(d => d.status === 'Completed')
     .reduce((sum, deal) => sum + deal.deal_amount, 0);
@@ -27,40 +25,30 @@ const BrandDealsStats: React.FC<BrandDealsStatsProps> = ({ allDeals, isLoading }
       title: 'Total Deals',
       value: totalDeals,
       icon: Briefcase,
-      color: 'text-blue-500',
-      description: 'Deals ever created',
     },
     {
       title: 'Active Deals',
       value: activeDeals,
       icon: Clock,
-      color: 'text-orange-500',
-      description: 'In progress (Drafting/Approved)',
     },
     {
       title: 'Pending Payments',
       value: pendingPayments,
-      icon: IndianRupee,
-      color: 'text-red-500',
-      description: 'Awaiting payment',
+      icon: FileText,
     },
     {
       title: 'Income Tracked',
       value: formatCurrency(incomeTracked),
-      icon: DollarSign,
-      color: 'text-green-500',
-      description: 'From completed deals',
+      icon: IndianRupee,
     },
   ];
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {[1, 2, 3, 4].map(i => (
-          <Card key={i} className="creator-card-base shadow-sm p-4">
-            <div className="flex items-center justify-center h-20">
-              <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            </div>
+          <Card key={i} className="rounded-xl border border-border shadow-sm p-5 flex items-center justify-center h-[120px]">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </Card>
         ))}
       </div>
@@ -68,24 +56,21 @@ const BrandDealsStats: React.FC<BrandDealsStatsProps> = ({ allDeals, isLoading }
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
       {stats.map((stat, index) => {
         const Icon = stat.icon;
         return (
-          <Card key={index} className="creator-card-base shadow-sm p-4">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-0 pt-0">
-              <CardTitle className="text-sm font-medium text-muted-foreground">{stat.title}</CardTitle>
-              <Icon className={cn("h-4 w-4", stat.color)} />
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              <div className="text-2xl font-bold text-foreground mt-1">{stat.value}</div>
-              <p className="text-xs text-muted-foreground mt-1">{stat.description}</p>
-            </CardContent>
+          <Card key={index} className="rounded-xl border border-border shadow-sm p-5 hover:shadow-md transition-shadow">
+            <div className="flex flex-col space-y-3">
+              <Icon className="h-5 w-5 text-muted-foreground" strokeWidth={1.5} />
+              <div>
+                <div className="text-3xl font-semibold tracking-tight text-foreground">{stat.value}</div>
+                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">{stat.title}</div>
+              </div>
+            </div>
           </Card>
         );
       })}
     </div>
   );
-};
-
-export default BrandDealsStats;
+}

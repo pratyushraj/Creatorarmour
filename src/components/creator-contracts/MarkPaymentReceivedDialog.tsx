@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,8 +33,8 @@ const MarkPaymentReceivedDialog: React.FC<MarkPaymentReceivedDialogProps> = ({ d
     }
 
     if (!paymentReceivedDate) {
-        toast.error('Payment received date is required.');
-        return;
+      toast.error('Payment received date is required.');
+      return;
     }
 
     try {
@@ -48,8 +48,8 @@ const MarkPaymentReceivedDialog: React.FC<MarkPaymentReceivedDialogProps> = ({ d
         original_contract_file_url: deal.contract_file_url,
         original_invoice_file_url: deal.invoice_file_url,
       });
-      
-      toast.success(`Payment for ${deal.brand_name} marked as received!`);
+
+      toast.success(`Payment for ${deal.brand_name} confirmed.`);
       onSaveSuccess();
       onClose();
     } catch (error) {
@@ -65,7 +65,7 @@ const MarkPaymentReceivedDialog: React.FC<MarkPaymentReceivedDialogProps> = ({ d
         <p className="text-sm font-medium text-foreground">Brand: {deal.brand_name}</p>
         <p className="text-xs text-muted-foreground">Amount: ₹{deal.deal_amount.toLocaleString('en-IN')}</p>
       </div>
-      
+
       <div>
         <Label htmlFor="paymentReceivedDate">Payment Received Date *</Label>
         <div className="relative">
@@ -80,7 +80,7 @@ const MarkPaymentReceivedDialog: React.FC<MarkPaymentReceivedDialogProps> = ({ d
           />
         </div>
       </div>
-      
+
       <div>
         <Label htmlFor="utrNumber">UTR / Transaction ID (Optional)</Label>
         <div className="relative">
@@ -95,7 +95,7 @@ const MarkPaymentReceivedDialog: React.FC<MarkPaymentReceivedDialogProps> = ({ d
           />
         </div>
       </div>
-      
+
       <DialogFooter>
         <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
           Cancel

@@ -49,7 +49,7 @@ import CreatorPaymentsAndRecovery from "./pages/CreatorPaymentsAndRecovery";
 import CreatorContentProtection from "./pages/CreatorContentProtection";
 import CreatorTaxCompliancePage from "./pages/CreatorTaxCompliancePage";
 import CreatorOnboarding from "./pages/CreatorOnboarding"; // NEW: Import CreatorOnboarding
-
+import CollabLink from "./pages/CollabLink";
 
 const queryClient = new QueryClient();
 
@@ -67,7 +67,7 @@ const App = () => {
             <Routes>
               {/* Root route: Renders MarketingHome. ProtectedRoute handles redirection if authenticated. */}
               <Route path="/" element={<ProtectedRoute><MarketingHome /></ProtectedRoute>} />
-              
+
               {/* Login route: Accessible directly, not protected */}
               <Route path="/login" element={<Login />} />
 
@@ -80,12 +80,12 @@ const App = () => {
               <Route path="/refund-policy" element={<RefundPolicy />} />
               <Route path="/delete-data" element={<DeleteData />} />
               <Route path="/sitemap" element={<Sitemap />} />
-              
+
               {/* Plan Detail Routes */}
               <Route path="/plan/essential" element={<EssentialPlan />} />
               <Route path="/plan/growth" element={<GrowthPlan />} />
               <Route path="/plan/strategic" element={<StrategicPlan />} />
-              
+
               {/* NEW LEAD FUNNEL ROUTES */}
               <Route path="/free-legal-check" element={<FreeLegalCheck />} />
               <Route path="/thank-you" element={<ThankYou />} />
@@ -98,7 +98,7 @@ const App = () => {
               <Route path="/client-documents" element={<ProtectedLayout allowedRoles={['client']}><ClientDocuments /></ProtectedLayout>} />
               <Route path="/client-consultations" element={<ProtectedLayout allowedRoles={['client']}><ClientConsultations /></ProtectedLayout>} />
               <Route path="/client-activity-log" element={<ProtectedLayout allowedRoles={['client']}><ClientActivityLog /></ProtectedLayout>} />
-              
+
               {/* Admin-specific routes */}
               <Route path="/admin-dashboard" element={<ProtectedLayout allowedRoles={['admin']}><AdminDashboard /></ProtectedLayout>} />
               <Route path="/admin-documents" element={<ProtectedLayout allowedRoles={['admin']}><AdminDocuments /></ProtectedLayout>} />
@@ -111,7 +111,7 @@ const App = () => {
 
               {/* CA-specific routes */}
               <Route path="/ca-dashboard" element={<ProtectedLayout allowedRoles={['chartered_accountant']}><CADashboard /></ProtectedLayout>} />
-              
+
               {/* Creator-specific routes */}
               <Route path="/creator-onboarding" element={<ProtectedLayout allowedRoles={['creator']}><CreatorOnboarding /></ProtectedLayout>} /> {/* NEW: Onboarding Route */}
               <Route path="/creator-dashboard" element={<ProtectedLayout allowedRoles={['creator']}><CreatorDashboard /></ProtectedLayout>} /> {/* New: Creator Dashboard Route */}
@@ -124,6 +124,8 @@ const App = () => {
 
               {/* Shared routes (accessible by client, admin, and CA) */}
               <Route path="/messages" element={<ProtectedLayout allowedRoles={['client', 'admin', 'chartered_accountant', 'creator']}><MessagesPage /></ProtectedLayout>} /> {/* Added creator role */}
+
+              <Route path="/collab/:username" element={<CollabLink />} />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
