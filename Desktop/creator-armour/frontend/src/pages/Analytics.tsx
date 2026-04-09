@@ -6,7 +6,7 @@ import { AnalyticsCard } from '../components/AnalyticsCard'
 import { SocialProof, LiveActivityFeed } from '../components/SocialProof'
 import { useStore } from '../store/useStore'
 import {
-    DollarSign,
+
     TrendingUp,
     Users,
     PieChart,
@@ -17,11 +17,11 @@ import {
     Award,
     Clock
 } from 'lucide-react'
-import type { Deal } from '../types'
+// import type { Deal } from '../types'
 
 export function Analytics() {
     const navigate = useNavigate()
-    const { deals, isAuthenticated } = useStore()
+    const { isAuthenticated } = useStore()
     const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d')
 
     // Mock analytics data
@@ -172,29 +172,29 @@ export function Analytics() {
                             <CardDescription>Your highest value collaborations</CardDescription>
                         </CardHeader>
                         <div className="space-y-4">
-                            {analytics.topDeals.map((deal, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                                            <Award className="w-5 h-5 text-primary-600" />
+                            {analytics.topDeals.map((deal, index) => {
+                                const statusColor = deal.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700';
+                                const statusText = deal.status === 'completed' ? 'Completed' : 'In Progress';
+                                return (
+                                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                                <Award className="w-5 h-5 text-primary-600" />
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-gray-900">{deal.brand}</p>
+                                                <p className="text-sm text-gray-500">{deal.date}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="font-medium text-gray-900">{deal.brand}</p>
-                                            <p className="text-sm text-gray-500">{deal.date}</p>
+                                        <div className="text-right">
+                                            <p className="font-bold text-gray-900">{formatCurrency(deal.value)}</p>
+                                            <span className={`text-xs px-2 py-0.5 rounded-full ${statusColor}`}>
+                                                {statusText}
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-gray-900">{formatCurrency(deal.value)}</p>
-                                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                            deal.status === 'completed'
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-blue-100 text-blue-700'
-                                        }`}>
-                                            {deal.status === 'completed' ? 'Completed' : 'In Progress'}
-                                        </span>
-                                    </div>
-                                </div>
-                            )}
+                                );
+                            })}
                         </div>
                     </Card>
 

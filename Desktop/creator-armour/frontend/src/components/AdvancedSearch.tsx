@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Card } from './Card'
 import { Button } from './Button'
-import { Input } from './Input'
-import { Search, Filter, X, ChevronDown, SlidersHorizontal } from 'lucide-react'
-import { cn } from '../lib/utils'
+
+import { Search, Filter, X, SlidersHorizontal } from 'lucide-react'
+
 
 interface FilterOption {
     id: string

@@ -196,7 +196,7 @@ export function Settings() {
                                         Delete your account and all associated data
                                     </p>
                                 </div>
-                                <Button variant="destructive" size="sm">Delete Account</Button>
+                                <Button variant="danger" size="sm">Delete Account</Button>
                             </div>
                         </Card>
                     </div>

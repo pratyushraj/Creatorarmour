@@ -1,5 +1,5 @@
 import { Card } from './Card'
-import { TrendingUp, TrendingDown, DollarSign, PieChart, Calendar, ArrowUpRight } from 'lucide-react'
+import { TrendingUp, TrendingDown, DollarSign, PieChart, ArrowUpRight } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface AnalyticsCardProps {
